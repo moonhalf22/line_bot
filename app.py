@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -9,11 +11,12 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-load_dotenv()
 
 # 用你自己的 Token/Secret
-line_bot_api = LineBotApi("CHANNEL_SECRET")
-handler = WebhookHandler("CHANNEL_ACCESS_TOKEN")
+secret = os.getenv("CHANNEL_SECRET")
+access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
+line_bot_api = LineBotApi(secret)
+handler = WebhookHandler(access_token)
 DATA_FILE = "record.json"
 
 # 初始化紀錄檔案
@@ -31,10 +34,10 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
 
-
-@app.route("/callback", methods=["POST"])
+@app.route("/", methods=["GET", "POST"])
+@app.route("/callback", methods=["GET", "POST"])
 def callback():
-    signature = request.headers["X-Line-Signature"]
+    signature = request.headers.get("X-Line-Signature")
     body = request.get_data(as_text=True)
 
     try:
@@ -80,4 +83,4 @@ def handle_message(event):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(port=5000)
